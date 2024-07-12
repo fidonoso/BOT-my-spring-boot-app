@@ -26,9 +26,9 @@ pipeline {
                 MAVEN_HOME = '/usr/share/maven'
             }
             steps {
-                dir('/var/jenkins_home/workspace/testLocal'){
+                // dir('/var/jenkins_home/workspace/test1@2'){
                     sh 'mvn clean package'
-                }
+                // }
             }
         }
         stage('Build Docker Image') {
