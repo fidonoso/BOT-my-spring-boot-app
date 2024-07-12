@@ -3,16 +3,15 @@ pipeline {
     
     environment {
         // Define environment variables
-        DOCKER_IMAGE = "ssepulvedacl/my-spring-boot-app"
+        DOCKER_IMAGE = "fidonoso/my-spring-boot-app"
         REGISTRY = "hub.docker.com" // e.g., Docker Hub or any other registry
-        //KUBE_CONFIG_PATH = credentials('kube-config') // Credential ID for Kubernetes config
     }
 
     stages {
         stage('Checkout') {
             steps {
                 // Clona el repositorio
-                git branch: 'main', url: 'https://github.com/ssepulvedamcl/my-spring-boot-app.git'
+                git branch: 'main', url: 'https://github.com/fidonoso/BOT-my-spring-boot-app'
             }
         }
         stage('Build') {
@@ -34,62 +33,11 @@ pipeline {
                 }
             }
         }
-        stage('Deploy to Kubernetes') {
+        stage('Cleanup') {
             steps {
-                script {
-                    // Crea un archivo de despliegue para Kubernetes
-                    sh """
-                    cat <<EOF > k8s-deployment.yaml
-                    apiVersion: apps/v1
-                    kind: Deployment
-                    metadata:
-                      name: my-spring-boot-app
-                      labels:
-                        app: my-spring-boot-app
-                    spec:
-                      replicas: 1
-                      selector:
-                        matchLabels:
-                          app: my-spring-boot-app
-                      template:
-                        metadata:
-                          labels:
-                            app: my-spring-boot-app
-                        spec:
-                          containers:
-                          - name: ssepulvedacl/my-spring-boot-app
-                            image: ${env.REGISTRY}/${DOCKER_IMAGE}:${env.BUILD_ID}
-                            ports:
-                            - containerPort: 8080
-                    ---
-                    apiVersion: v1
-                    kind: Service
-                    metadata:
-                      name: my-spring-boot-app-service
-                    spec:
-                      type: LoadBalancer
-                      ports:
-                      - port: 80
-                        targetPort: 8080
-                      selector:
-                        app: my-spring-boot-app
-                    EOF
-                    """
-
-                    // Despliega en Kubernetes
-                    //withKubeConfig([credentialsId: env.KUBE_CONFIG_PATH]) {
-                        sh 'kubectl apply -f k8s-deployment.yaml'
-                    //}
-                }
+                // Limpieza después de cada build
+                cleanWs()
             }
         }
-	stage('Cleanup'){
-		steps{
-			//Limpieza despues de cada build
-			cleanWs()
-		}
-	}
     }
-
 }
-
