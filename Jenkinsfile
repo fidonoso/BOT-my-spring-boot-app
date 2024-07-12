@@ -4,10 +4,11 @@ pipeline {
     environment {
         // Define environment variables
         DOCKER_IMAGE = "fidonoso/my-spring-boot-app"
-        REGISTRY = "hub.docker.com" // e.g., Docker Hub or any other registry
+        REGISTRY = "docker.io" // e.g., Docker Hub or any other registry
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 // Clona el repositorio
@@ -15,25 +16,28 @@ pipeline {
             }
         }
         stage('Build') {
-                agent {
-                    docker {
-                        image 'maven:3.8.4-openjdk-11' // Usa la imagen oficial de Maven
-                        args '-v /var/run/docker.sock:/var/run/docker.sock' // Monta el socket Docker
-                    }
+            agent {
+                docker {
+                    image 'maven:3.8.4-openjdk-11' 
+                    args '-v /var/run/docker.sock:/var/run/docker.sock' 
                 }
+            }
+            environment {
+                MAVEN_HOME = '/usr/share/maven'
+            }
             steps {
-                // Construye el proyecto Maven
-                sh 'mvn clean package'
+                dir('/var/jenkins_home/workspace/testLocal'){
+                    sh 'mvn clean package'
+                }
             }
         }
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Construye la imagen Docker
-                    def image = docker.build("${DOCKER_IMAGE}:${env.BUILD_ID}")
-                    // Inicia sesión en el registro Docker
-                    docker.withRegistry("https://${env.REGISTRY}", 'docker-credentials-id') {
-                        // Empuja la imagen al registro
+                    echo pwd
+                    def imageName = "${DOCKER_IMAGE}:${env.BUILD_ID}"
+                    def image = docker.build(imageName)
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-credentials-id') {
                         image.push()
                     }
                 }
@@ -41,7 +45,6 @@ pipeline {
         }
         stage('Cleanup') {
             steps {
-                // Limpieza después de cada build
                 cleanWs()
             }
         }
