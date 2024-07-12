@@ -1,6 +1,6 @@
 pipeline {
     agent any
-    
+
     environment {
         // Define environment variables
         DOCKER_IMAGE = "fidonoso/my-spring-boot-app"
@@ -15,6 +15,12 @@ pipeline {
             }
         }
         stage('Build') {
+                agent {
+                    docker {
+                        image 'maven:3.8.4-openjdk-11' // Usa la imagen oficial de Maven
+                        args '-v /var/run/docker.sock:/var/run/docker.sock' // Monta el socket Docker
+                    }
+                }
             steps {
                 // Construye el proyecto Maven
                 sh 'mvn clean package'
